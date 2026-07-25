@@ -1,43 +1,32 @@
-// Fogbound © 2025 Nikody. All rights reserved.
-
-
 #include "BaseCharacter.h"
-
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 
-// Sets default values
 ABaseCharacter::ABaseCharacter()
 {
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	if (HasAuthority())
 	{
 		Health = 3;
 	}
-
 }
 
-// Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
-// Called to bind functionality to input
 void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void ABaseCharacter::TryUseMedkit()
@@ -59,7 +48,105 @@ void ABaseCharacter::Server_UseMedKit_Implementation()
 
 void ABaseCharacter::UseMedKit()
 {
-	Health = FMath::Clamp(Health + 1, 0 , MaxHealth);
+	Health = FMath::Clamp(Health + 1, 0, MaxHealth);
+}
+
+void ABaseCharacter::PlayMontageLocal(UAnimMontage* Montage, float PlayRate)
+{
+	if (!Montage)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* SkelMesh = GetMesh();
+	if (!SkelMesh)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = SkelMesh->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	AnimInstance->Montage_Play(Montage, PlayRate);
+}
+
+void ABaseCharacter::StopMontageLocal(UAnimMontage* Montage, float BlendOutTime)
+{
+	if (!Montage)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* SkelMesh = GetMesh();
+	if (!SkelMesh)
+	{
+		return;
+	}
+
+	UAnimInstance* AnimInstance = SkelMesh->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	AnimInstance->Montage_Stop(BlendOutTime, Montage);
+}
+
+void ABaseCharacter::PlayReplicatedMontage(UAnimMontage* Montage, float PlayRate)
+{
+	if (!Montage)
+	{
+		return;
+	}
+
+	if (HasAuthority())
+	{
+		MC_PlayMontage(Montage, PlayRate);
+	}
+	else
+	{
+		Server_PlayMontage(Montage, PlayRate);
+	}
+}
+
+void ABaseCharacter::StopReplicatedMontage(UAnimMontage* Montage, float BlendOutTime)
+{
+	if (!Montage)
+	{
+		return;
+	}
+
+	if (HasAuthority())
+	{
+		MC_StopMontage(Montage, BlendOutTime);
+	}
+	else
+	{
+		Server_StopMontage(Montage, BlendOutTime);
+	}
+}
+
+void ABaseCharacter::Server_PlayMontage_Implementation(UAnimMontage* Montage, float PlayRate)
+{
+	MC_PlayMontage(Montage, PlayRate);
+}
+
+void ABaseCharacter::MC_PlayMontage_Implementation(UAnimMontage* Montage, float PlayRate)
+{
+	PlayMontageLocal(Montage, PlayRate);
+}
+
+void ABaseCharacter::Server_StopMontage_Implementation(UAnimMontage* Montage, float BlendOutTime)
+{
+	MC_StopMontage(Montage, BlendOutTime);
+}
+
+void ABaseCharacter::MC_StopMontage_Implementation(UAnimMontage* Montage, float BlendOutTime)
+{
+	StopMontageLocal(Montage, BlendOutTime);
 }
 
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -68,5 +155,3 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 	DOREPLIFETIME(ABaseCharacter, Health);
 }
-
-

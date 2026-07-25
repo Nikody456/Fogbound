@@ -1,5 +1,3 @@
-// Fogbound © 2025 Nikody. All rights reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,10 +10,8 @@ UCLASS()
 class FOGBOUND_API AUsableItem : public AActor, public IInteract, public IUse
 {
 	GENERATED_BODY()
-	
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -23,14 +19,12 @@ protected:
 
 public:
 	AUsableItem();
-	
-	// Called every frame
+
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Collision")
 	void UpdateMeshCollision(bool bEnableCollision);
 
-	/** Настройка коллизии на всех машинах */
 	UFUNCTION(NetMulticast, Reliable)
 	void MC_SetMeshCollision(bool bEnableCollision);
 	void MC_SetMeshCollision_Implementation(bool bEnableCollision);
@@ -46,19 +40,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FText ItemName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Anim")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Anim")
 	UAnimMontage* DefaultMontage = nullptr;
 
-	/** Запускает AnimMontage на переданном SkeletalMeshComponent */
 	UFUNCTION(BlueprintCallable, Category = "Animation")
-	void PlayAnimMontage(USkeletalMeshComponent* SkeletalMeshComp, float PlayRate = 1.0f);
+	void PlayInHandsMontage(USkeletalMeshComponent* SkeletalMeshComp, float PlayRate = 1.0f);
 
-	/** Останавливает AnimMontage на переданном SkeletalMeshComponent */
 	UFUNCTION(BlueprintCallable, Category = "Animation")
-	void StopAnimMontage(USkeletalMeshComponent* SkeletalMeshComp, float BlendOutTime = 0.25f);
+	void StopInHandsMontage(USkeletalMeshComponent* SkeletalMeshComp, float BlendOutTime = 0.25f);
 
 private:
 	UPROPERTY(BlueprintReadWrite, Category = "State", meta = (AllowPrivateAccess = "true"))
 	bool bIsEquipped = false;
 
+	ABaseCharacter* ResolveMontageCharacter(USkeletalMeshComponent* SkeletalMeshComp) const;
 };

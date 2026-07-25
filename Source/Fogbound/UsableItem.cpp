@@ -1,14 +1,10 @@
-// Fogbound © 2025 Nikody. All rights reserved.
-
-
 #include "UsableItem.h"
-
 #include "BaseCharacter.h"
+#include "InventoryComponent.h"
+#include "Animation/AnimInstance.h"
 
-// Sets default values
 AUsableItem::AUsableItem()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
@@ -17,27 +13,25 @@ AUsableItem::AUsableItem()
 	MeshComponent->SetIsReplicated(true);
 
 	Icon = nullptr;
-	ItemName = FText::GetEmpty(); 
-
+	ItemName = FText::GetEmpty();
 }
 
-// Called when the game starts or when spawned
 void AUsableItem::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
 void AUsableItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AUsableItem::MC_SetMeshCollision_Implementation(bool bEnableCollision)
 {
-	if (!MeshComponent) return;
+	if (!MeshComponent)
+	{
+		return;
+	}
 
 	if (bEnableCollision)
 	{
@@ -53,9 +47,10 @@ void AUsableItem::MC_SetMeshCollision_Implementation(bool bEnableCollision)
 
 void AUsableItem::Interact_Implementation(ABaseCharacter* InstigatorActor, bool bIsServerInteract)
 {
-	if (!InstigatorActor) return;
-
-	if (bIsEquipped) return;
+	if (!InstigatorActor || bIsEquipped)
+	{
+		return;
+	}
 
 	if (bIsServerInteract)
 	{
@@ -68,7 +63,6 @@ void AUsableItem::Interact_Implementation(ABaseCharacter* InstigatorActor, bool 
 
 void AUsableItem::UpdateMeshCollision(bool bEnableCollision)
 {
-	// Вызываем Multicast с сервера
 	if (HasAuthority())
 	{
 		MC_SetMeshCollision(bEnableCollision);
@@ -83,26 +77,74 @@ void AUsableItem::SetPhysics(bool bNewState)
 	}
 }
 
-void AUsableItem::PlayAnimMontage(USkeletalMeshComponent* SkeletalMeshComp, float PlayRate)
+ABaseCharacter* AUsableItem::ResolveMontageCharacter(USkeletalMeshComponent* SkeletalMeshComp) const
 {
-	if (!SkeletalMeshComp || !DefaultMontage)
+	if (SkeletalMeshComp)
+	{
+		if (ABaseCharacter* FromMesh = Cast<ABaseCharacter>(SkeletalMeshComp->GetOwner()))
+		{
+			return FromMesh;
+		}
+	}
+
+	if (ABaseCharacter* FromOwner = Cast<ABaseCharacter>(GetOwner()))
+	{
+		return FromOwner;
+	}
+
+	return Cast<ABaseCharacter>(GetAttachParentActor());
+}
+
+void AUsableItem::PlayInHandsMontage(USkeletalMeshComponent* SkeletalMeshComp, float PlayRate)
+{
+	if (!DefaultMontage)
+	{
 		return;
+	}
+
+	if (ABaseCharacter* Character = ResolveMontageCharacter(SkeletalMeshComp))
+	{
+		Character->PlayReplicatedMontage(DefaultMontage, PlayRate);
+		return;
+	}
+
+	if (!SkeletalMeshComp)
+	{
+		return;
+	}
 
 	UAnimInstance* AnimInstance = SkeletalMeshComp->GetAnimInstance();
 	if (!AnimInstance)
+	{
 		return;
+	}
 
 	AnimInstance->Montage_Play(DefaultMontage, PlayRate);
 }
 
-void AUsableItem::StopAnimMontage(USkeletalMeshComponent* SkeletalMeshComp, float BlendOutTime)
+void AUsableItem::StopInHandsMontage(USkeletalMeshComponent* SkeletalMeshComp, float BlendOutTime)
 {
-	if (!SkeletalMeshComp || !DefaultMontage)
+	if (!DefaultMontage)
+	{
 		return;
+	}
+
+	if (ABaseCharacter* Character = ResolveMontageCharacter(SkeletalMeshComp))
+	{
+		Character->StopReplicatedMontage(DefaultMontage, BlendOutTime);
+		return;
+	}
+
+	if (!SkeletalMeshComp)
+	{
+		return;
+	}
 
 	UAnimInstance* AnimInstance = SkeletalMeshComp->GetAnimInstance();
 	if (!AnimInstance)
+	{
 		return;
+	}
 
 	AnimInstance->Montage_Stop(BlendOutTime, DefaultMontage);
 }

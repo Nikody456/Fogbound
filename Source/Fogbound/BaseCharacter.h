@@ -1,5 +1,3 @@
-// Fogbound © 2025 Nikody. All rights reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,19 +11,15 @@ class FOGBOUND_API ABaseCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ABaseCharacter();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, BlueprintReadOnly, Category = "Health")
 	int32 Health = 3;
@@ -42,6 +36,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void TryUseMedkit();
 
+	/** Plays montage on this character's mesh on all machines. Safe from client or server. */
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void PlayReplicatedMontage(UAnimMontage* Montage, float PlayRate = 1.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void StopReplicatedMontage(UAnimMontage* Montage, float BlendOutTime = 0.25f);
+
 	FORCEINLINE UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 private:
@@ -50,5 +51,19 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	UInventoryComponent* InventoryComponent;
-	
+
+	UFUNCTION(Server, Reliable)
+	void Server_PlayMontage(UAnimMontage* Montage, float PlayRate);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_PlayMontage(UAnimMontage* Montage, float PlayRate);
+
+	UFUNCTION(Server, Reliable)
+	void Server_StopMontage(UAnimMontage* Montage, float BlendOutTime);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MC_StopMontage(UAnimMontage* Montage, float BlendOutTime);
+
+	void PlayMontageLocal(UAnimMontage* Montage, float PlayRate);
+	void StopMontageLocal(UAnimMontage* Montage, float BlendOutTime);
 };
