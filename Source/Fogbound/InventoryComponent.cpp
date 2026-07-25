@@ -1,4 +1,4 @@
-﻿#include "InventoryComponent.h"
+#include "InventoryComponent.h"
 #include "UsableItem.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Actor.h"
