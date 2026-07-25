@@ -1,0 +1,74 @@
+# Unreal Engine 5 — Fogbound
+
+# Too large for GitHub's 2 GiB push limit — keep local only
+Content/HorrorBasement/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.DotSettings.user
+.vscode/
+
+# Intermediate & generated
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+LocalBuilds/
+
+# Plugin build artifacts (keep plugin Source/)
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+Plugins/**/DerivedDataCache/
+Plugins/**/Saved/
+
+# Built map data
+*_BuiltData.uasset
+
+# Precompiled Assets (optional SourceArt pipeline)
+SourceArt/**/*.png
+SourceArt/**/*.tga
+
+# Compiled objects / libs / executables
+*.slo
+*.lo
+*.o
+*.obj
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+*.mod
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
+*.ipa
+
+# Xcode (if ever building on Mac)
+*.xcodeproj
+*.xcworkspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Crash / dump reports
+*.dmp
+*.mdmp
+
+# Autosave / backup
+*.bak
+*~
